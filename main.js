@@ -108,7 +108,8 @@ function autoCorrelate(buf, sampleRate) {
     rms += val * val;
   }
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return -1;
+  // Lowered threshold so quieter recordings (like some notes) still register
+  if (rms < 0.0025) return -1;
 
   let r1 = 0,
     r2 = SIZE - 1,
