@@ -83,54 +83,6 @@ body {
   transform: scale(0.96);
 }
 
-/* Mic button */
-
-#micToggle {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 999px;
-  border: none;
-  background: #24272c;
-  position: relative;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
-  touch-action: manipulation;
-}
-
-#micToggle::before,
-#micToggle::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-}
-
-#micToggle::before {
-  width: 16px;
-  height: 22px;
-  border-radius: 8px;
-  border: 2px solid var(--text-soft);
-  border-top: 6px solid var(--text-soft);
-  border-bottom: none;
-}
-
-#micToggle::after {
-  width: 16px;
-  height: 16px;
-  border-bottom: 2px solid var(--text-soft);
-  border-radius: 0 0 12px 12px;
-  top: 12px;
-}
-
-#micToggle.on {
-  background: var(--accent-soft);
-}
-
-#micToggle.on::before,
-#micToggle.on::after {
-  border-color: var(--accent);
-}
-
 /* Main panel */
 
 .main-panel {

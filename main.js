@@ -13,7 +13,6 @@ const MAX_CENTS = 50; // range each side for display
 const noteButtons = Array.from(
   document.querySelectorAll(".note-buttons button")
 );
-const micToggle = document.getElementById("micToggle");
 const targetNoteEl = document.getElementById("targetNote");
 const currentFreqEl = document.getElementById("currentFreq");
 const meterNeedleEl = document.getElementById("meterNeedle");
@@ -22,11 +21,12 @@ const mainPanel = document.querySelector(".main-panel");
 
 let audioContext = null;
 let analyser = null;
-let micSource = null;
 let dataBuffer = null;
 let listening = false;
 let rafId = null;
 let targetNote = null;
+
+const elementSourceMap = new WeakMap();
 
 function setTargetNote(name) {
   targetNote = NOTES[name] || null;
@@ -44,63 +44,60 @@ function setTargetNote(name) {
   }
 }
 
+function startAnalyzingFromElement(el) {
+  if (!el) return;
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (!analyser) {
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.minDecibels = -90;
+    analyser.maxDecibels = -10;
+    analyser.smoothingTimeConstant = 0.85;
+    dataBuffer = new Float32Array(analyser.fftSize);
+    analyser.connect(audioContext.destination);
+  }
+
+  let source = elementSourceMap.get(el);
+  if (!source) {
+    source = audioContext.createMediaElementSource(el);
+    source.connect(analyser);
+    elementSourceMap.set(el, source);
+  }
+
+  listening = true;
+  mainPanel.classList.remove("no-input");
+  loop();
+}
+
+function stopAnalyzing() {
+  listening = false;
+  mainPanel.classList.add("no-input");
+  if (rafId) cancelAnimationFrame(rafId);
+}
+
 function playReference(noteName) {
   const info = NOTES[noteName];
   if (!info) return;
   const el = document.getElementById(info.audioId);
   if (!el) return;
   el.currentTime = 0;
-  el.play().catch(() => {});
-}
 
-async function initAudio() {
-  if (audioContext) return;
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  analyser = audioContext.createAnalyser();
-  analyser.fftSize = 2048;
-  analyser.minDecibels = -90;
-  analyser.maxDecibels = -10;
-  analyser.smoothingTimeConstant = 0.85;
-  dataBuffer = new Float32Array(analyser.fftSize);
-}
-
-async function startListening() {
-  try {
-    await initAudio();
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true },
-      video: false
+  // Attach end handler once
+  if (!el._hasEndHandler) {
+    el.addEventListener("ended", () => {
+      stopAnalyzing();
+      currentFreqEl.textContent = "0.0 Hz";
+      meterNeedleEl.classList.add("off");
+      centsValueEl.textContent = "0";
     });
-    micSource = audioContext.createMediaStreamSource(stream);
-    micSource.connect(analyser);
-    listening = true;
-    micToggle.classList.add("on");
-    mainPanel.classList.remove("no-input");
-    loop();
-  } catch (e) {
-    console.error(e);
-    listening = false;
-    micToggle.classList.remove("on");
+    el._hasEndHandler = true;
   }
-}
 
-function stopListening() {
-  if (micSource && micSource.mediaStream) {
-    micSource.mediaStream.getTracks().forEach((t) => t.stop());
-  }
-  micSource = null;
-  listening = false;
-  micToggle.classList.remove("on");
-  mainPanel.classList.add("no-input");
-  if (rafId) cancelAnimationFrame(rafId);
-}
-
-function toggleMic() {
-  if (listening) {
-    stopListening();
-  } else {
-    startListening();
-  }
+  el.play().then(() => {
+    startAnalyzingFromElement(el);
+  }).catch(() => {});
 }
 
 function autoCorrelate(buf, sampleRate) {
@@ -224,8 +221,6 @@ noteButtons.forEach((btn) => {
     playReference(note);
   });
 });
-
-micToggle.addEventListener("click", toggleMic);
 
 // Initial state
 mainPanel.classList.add("no-target", "no-input");
