@@ -3,9 +3,9 @@ const NOTES = {
   B: { freq: 493.88, audioId: "audio_B" },
   C: { freq: 523.25, audioId: "audio_C" },
   D: { freq: 587.33, audioId: "audio_D" },
-  E: { freq: 659.25, audioId: "audio_E" },
+  E: { freq: 329.63, audioId: "audio_E" }, // adjusted to match audio (E4)
   F: { freq: 698.46, audioId: "audio_F" },
-  G: { freq: 783.99, audioId: "audio_G" }
+  G: { freq: 392.0, audioId: "audio_G" }   // adjusted to match audio (G4)
 };
 
 const MAX_CENTS = 50; // range each side for display
@@ -108,8 +108,7 @@ function autoCorrelate(buf, sampleRate) {
     rms += val * val;
   }
   rms = Math.sqrt(rms / SIZE);
-  // Lowered threshold so quieter recordings (like some notes) still register
-  if (rms < 0.0025) return -1;
+  if (rms < 0.01) return -1;
 
   let r1 = 0,
     r2 = SIZE - 1,
