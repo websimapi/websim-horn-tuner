@@ -5,7 +5,7 @@ const NOTES = {
   D: { freq: 587.33, audioId: "audio_D" },
   E: { freq: 329.63, audioId: "audio_E" }, // adjusted to match audio (E4)
   F: { freq: 698.46, audioId: "audio_F" },
-  G: { freq: 392.0, audioId: "audio_G" }   // adjusted to match audio (G4)
+  G: { freq: 783.99, audioId: "audio_G" }   // corrected G5
 };
 
 const MAX_CENTS = 50; // range each side for display
